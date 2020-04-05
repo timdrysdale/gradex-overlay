@@ -17,8 +17,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	unicommon "github.com/unidoc/unipdf/v3/common"
+	creator "github.com/unidoc/unipdf/v3/creator"
 )
 
 func init() {
@@ -43,8 +45,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	//basename := strings.TrimSuffix(inputPath, suffix)
-	//outputPath := basename + "-mark" + suffix
+	basename := strings.TrimSuffix(inputPath, suffix)
+	outputPath := basename + "-mark" + suffix
 
 	jpegPath := "./jpg"
 
@@ -55,11 +57,19 @@ func main() {
 	}
 
 	err = convertPDFToJPEGs(inputPath, jpegPath)
-
-	// err := coverPdf(inputPath, outputPath)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
 
+	c := creator.New()
+	c.SetPageMargins(0, 0, 0, 0) // we're not printing
+
+	AddImagePage("./jpg/edited5-covered0002.jpg", c)
+
+	err = c.WriteToFile(outputPath)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
 }
