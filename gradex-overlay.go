@@ -46,29 +46,15 @@ func main() {
 	//basename := strings.TrimSuffix(inputPath, suffix)
 	//outputPath := basename + "-mark" + suffix
 
-	jpegPath := "./jpeg"
-	smallJPEGPath := "./jpeg-small"
-	largeJPEGPath := "./jpeg-large"
-	/*
+	jpegPath := "./jpg"
 
-		err := ensureDir(jpegPath)
-		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			os.Exit(1)
-		}
-		err = ensureDir(smallJPEGPath)
-		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			os.Exit(1)
-		}
-		err = ensureDir(largeJPEGPath)
-		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			os.Exit(1)
-		}
-	*/
-	err := convertPDFToJPEGs(inputPath, jpegPath, smallJPEGPath,
-		largeJPEGPath)
+	err := ensureDir(jpegPath)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	err = convertPDFToJPEGs(inputPath, jpegPath)
 
 	// err := coverPdf(inputPath, outputPath)
 	if err != nil {

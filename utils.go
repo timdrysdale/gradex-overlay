@@ -7,9 +7,9 @@ import (
 // pr-pal @ https://stackoverflow.com/questions/37932551/mkdir-if-not-exists-using-golang
 func ensureDir(dirName string) error {
 
-	err := os.Mkdir(dirName, 02666) //probably umasked with 22 not 02
+	err := os.Mkdir(dirName, 0700) //probably umasked with 22 not 02
 
-	os.Chmod(dirName, 02666)
+	os.Chmod(dirName, 0700)
 
 	if err == nil || os.IsExist(err) {
 		return nil
