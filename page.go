@@ -3,24 +3,18 @@ package main
 import (
 	"fmt"
 
+	"github.com/unidoc/unipdf/v3/annotator"
 	creator "github.com/unidoc/unipdf/v3/creator"
+	"github.com/unidoc/unipdf/v3/model"
 )
 
 // see https://github.com/unidoc/unipdf-examples/blob/master/image/pdf_add_image_to_page.go
 // xPos and yPos define the upper left corner of the image location, and iwidth
 // is the width of the image in PDF document dimensions (height/width ratio is maintained).
 
-func AddImagePage(imgPath string, c *creator.Creator) error {
+func AddImagePage(imgPath string, markID string, c *creator.Creator, form *model.PdfAcroForm) error {
 
 	// load image
-
-	// decide on page size and orientation (A4+boxwidth only, for now) based on image
-
-	// decide image scaling to suit page
-
-	// place on page
-
-	// Prepare the image.
 	img, err := c.NewImageFromFile(imgPath)
 	if err != nil {
 		return err
@@ -28,6 +22,7 @@ func AddImagePage(imgPath string, c *creator.Creator) error {
 
 	fmt.Printf("%f %f\n", img.Width(), img.Height())
 
+	// Choose page size
 	// start out as A4 portrait, swap to landscape if need be
 	barWidth := 50 * creator.PPMM
 	A4Width := 210 * creator.PPMM
@@ -44,15 +39,27 @@ func AddImagePage(imgPath string, c *creator.Creator) error {
 		imgLeft = barWidth
 	}
 
+	// scale and position image
 	img.ScaleToHeight(pageHeight)
+	img.SetPos(imgLeft, 0) //left, top
 
-	img.SetPos(imgLeft, 0) //top,left
+	// create new page
+	c.SetPageSize(creator.PageSize{pageWidth, pageHeight})
+	page := c.NewPage()
 
-	c.SetPageSize(creator.PageSize{pageWidth, A4Height})
-
-	c.NewPage()
-
+	// add image
 	c.Draw(img)
+
+	// add mark box forms, prepend markID string
+	opt := annotator.TextFieldOptions{}
+	opt.Value = "THIS IS MY VALUE"
+	textf, err := annotator.NewTextField(page, "markbox", []float64{0, 0, 200, 200}, opt)
+	if err != nil {
+		panic(err)
+	}
+
+	*form.Fields = append(*form.Fields, textf.PdfField)
+	page.AddAnnotation(textf.Annotations[0].PdfAnnotation)
 
 	return nil
 
