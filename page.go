@@ -1,6 +1,10 @@
 package main
 
-import creator "github.com/unidoc/unipdf/v3/creator"
+import (
+	"fmt"
+
+	creator "github.com/unidoc/unipdf/v3/creator"
+)
 
 // see https://github.com/unidoc/unipdf-examples/blob/master/image/pdf_add_image_to_page.go
 // xPos and yPos define the upper left corner of the image location, and iwidth
@@ -21,10 +25,30 @@ func AddImagePage(imgPath string, c *creator.Creator) error {
 	if err != nil {
 		return err
 	}
-	img.ScaleToWidth(210 * creator.PPMM)
-	img.SetPos(0, 0) //top, left for now
 
-	c.SetPageSize(creator.PageSize{260 * creator.PPMM, 297 * creator.PPMM})
+	fmt.Printf("%f %f\n", img.Width(), img.Height())
+
+	// start out as A4 portrait, swap to landscape if needbe
+	barWidth := 50 * creator.PPMM
+	A4Width := 210 * creator.PPMM
+	A4Height := 297 * creator.PPMM
+	pageWidth := A4Width + barWidth
+	pageHeight := A4Height
+	imgLeft := 0.0
+
+	isLandscape := img.Height() < img.Width()
+
+	if isLandscape {
+		pageWidth = pageWidth + barWidth
+		pageHeight = A4Width
+		imgLeft = imgLeft + barWidth
+	}
+	img.ScaleToHeight(pageHeight)
+	img.SetPos(0, imgLeft) //top,left
+
+	fmt.Printf("%f %f\n", img.Width(), img.Height())
+
+	c.SetPageSize(creator.PageSize{pageWidth, A4Height})
 
 	c.NewPage()
 
