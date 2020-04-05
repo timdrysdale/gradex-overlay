@@ -4,12 +4,16 @@
 *.dll
 *.so
 *.dylib
-
+*~
 # Test binary, built with `go test -c`
 *.test
-
+*.jpg
+*.jpeg
+*.pdf
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-
+#binaries
+gradex-overlay
+gradex-overlay.exe
 # Dependency directories (remove the comment below to include it)
 # vendor/
