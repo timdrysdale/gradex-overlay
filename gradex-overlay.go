@@ -65,7 +65,7 @@ func main() {
 	c := creator.New()
 	c.SetPageMargins(0, 0, 0, 0) // we're not printing
 
-	AddImagePage("./jpg/edited5-covered0002.jpg", c)
+	AddImagePage("./jpg/edited5-covered0005.jpg", c)
 
 	err = c.WriteToFile(outputPath)
 	if err != nil {

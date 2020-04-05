@@ -28,7 +28,7 @@ func AddImagePage(imgPath string, c *creator.Creator) error {
 
 	fmt.Printf("%f %f\n", img.Width(), img.Height())
 
-	// start out as A4 portrait, swap to landscape if needbe
+	// start out as A4 portrait, swap to landscape if need be
 	barWidth := 50 * creator.PPMM
 	A4Width := 210 * creator.PPMM
 	A4Height := 297 * creator.PPMM
@@ -39,14 +39,14 @@ func AddImagePage(imgPath string, c *creator.Creator) error {
 	isLandscape := img.Height() < img.Width()
 
 	if isLandscape {
-		pageWidth = pageWidth + barWidth
+		pageWidth = A4Height + (2 * barWidth)
 		pageHeight = A4Width
-		imgLeft = imgLeft + barWidth
+		imgLeft = barWidth
 	}
-	img.ScaleToHeight(pageHeight)
-	img.SetPos(0, imgLeft) //top,left
 
-	fmt.Printf("%f %f\n", img.Width(), img.Height())
+	img.ScaleToHeight(pageHeight)
+
+	img.SetPos(imgLeft, 0) //top,left
 
 	c.SetPageSize(creator.PageSize{pageWidth, A4Height})
 
