@@ -11,6 +11,7 @@ import (
 	creator "github.com/unidoc/unipdf/v3/creator"
 	"github.com/unidoc/unipdf/v3/model"
 	pdf "github.com/unidoc/unipdf/v3/model"
+	"github.com/unidoc/unipdf/v3/model/optimize"
 )
 
 type markOpt struct {
@@ -136,6 +137,16 @@ func convertJPEGToOverlaidPDF(jpegFilename string, pageFilename string, formID s
 		os.Exit(1)
 	}
 	defer of.Close()
+
+	pdfWriter.SetOptimizer(optimize.New(optimize.Options{
+		CombineDuplicateDirectObjects:   true,
+		CombineIdenticalIndirectObjects: true,
+		CombineDuplicateStreams:         true,
+		CompressStreams:                 true,
+		UseObjectStreams:                true,
+		ImageQuality:                    80,
+		ImageUpperPPI:                   100,
+	}))
 
 	pdfWriter.Write(of)
 }
