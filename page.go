@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"math"
+
 	creator "github.com/unidoc/unipdf/v3/creator"
 )
 
@@ -17,7 +20,7 @@ func AddImagePage(imgPath string, c *creator.Creator) (*markOpt, error) {
 	}
 
 	// start out as A4 portrait, swap to landscape if need be
-	barWidth := 25 * creator.PPMM
+	barWidth := 30 * creator.PPMM
 	A4Width := 210 * creator.PPMM
 	A4Height := 297 * creator.PPMM
 	pageWidth := A4Width + barWidth
@@ -41,18 +44,72 @@ func AddImagePage(imgPath string, c *creator.Creator) (*markOpt, error) {
 	c.NewPage()
 	c.Draw(img)
 
-	opts := &markOpt{
+	// these are tweaked - see vspace hack
+	// TODO make this make sense
+
+	opt := &markOpt{
 		left:             isLandscape,
 		right:            true,
 		barwidth:         barWidth,
 		pageWidth:        pageWidth,
 		pageHeight:       pageHeight,
-		marksEvery:       25 * creator.PPMM,
-		markHeight:       12 * creator.PPMM,
+		marksEvery:       26.25 * creator.PPMM,
+		markHeight:       18 * creator.PPMM,
 		markWidth:        20 * creator.PPMM,
-		markMargin:       0 * creator.PPMM,
-		markBottomMargin: 5 * creator.PPMM,
+		markMargin:       5 * creator.PPMM,
+		markBottomMargin: 0 * creator.PPMM,
 	}
 
-	return opts, nil
+	// coloured box for the marks
+
+	boxX := pageWidth - barWidth
+	boxY := 0.0
+
+	rect := c.NewRectangle(boxX, boxY, barWidth, pageHeight)
+	rect.SetBorderColor(creator.ColorRed)
+	rect.SetFillColor(creator.ColorRGBFromHex("#FFCCCB"))
+	c.Draw(rect)
+
+	if isLandscape {
+		boxX = 0.0
+		rect = c.NewRectangle(boxX, boxY, barWidth, pageHeight)
+		rect.SetBorderColor(creator.ColorRed)
+		rect.SetFillColor(creator.ColorRGBFromHex("#FFCCCB"))
+		c.Draw(rect)
+
+	}
+
+	xright := opt.pageWidth - opt.barwidth + opt.markMargin
+	xleft := opt.barwidth - opt.markWidth - opt.markMargin
+
+	numMarks := math.Floor((opt.pageHeight) / opt.marksEvery)
+
+	vspace := 0.0
+
+	if isLandscape {
+		vspace = 4 * creator.PPMM
+	}
+
+	opt.markBottomMargin = vspace //hack
+
+	for idx := 1; idx <= int(numMarks); idx = idx + 1 {
+		ypos := pageHeight - (float64(idx) * opt.marksEvery) + vspace
+		fmt.Printf("%d %f\n", idx, ypos)
+		if opt.left {
+			rect = c.NewRectangle(xleft, ypos, opt.markWidth, opt.markHeight)
+			rect.SetBorderColor(creator.ColorRed)
+			rect.SetFillColor(creator.ColorRGBFromHex("#FFFFFF"))
+			c.Draw(rect)
+		}
+		if opt.right {
+
+			rect = c.NewRectangle(xright, ypos, opt.markWidth, opt.markHeight)
+			rect.SetBorderColor(creator.ColorRed)
+			rect.SetFillColor(creator.ColorRGBFromHex("#FFFFFF"))
+			c.Draw(rect)
+		}
+
+	}
+
+	return opt, nil
 }
