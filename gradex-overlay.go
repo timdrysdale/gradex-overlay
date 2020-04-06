@@ -14,16 +14,12 @@ package main
  */
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/mattetti/filebuffer"
 	unicommon "github.com/unidoc/unipdf/v3/common"
-	creator "github.com/unidoc/unipdf/v3/creator"
-	pdf "github.com/unidoc/unipdf/v3/model"
 )
 
 func init() {
@@ -80,6 +76,8 @@ func main() {
 	pageFileOption := fmt.Sprintf("%s/%s%%04d.pdf", pagePath, basename)
 	formNameOption := fmt.Sprintf("%s%%04d", basename)
 
+	mergePaths := []string{}
+
 	// gs starts indexing at 1
 	for imgIdx := 1; imgIdx <= numPages; imgIdx = imgIdx + 1 {
 
@@ -91,69 +89,15 @@ func main() {
 		// do the overlay
 		convertJPEGToOverlaidPDF(jpegFilename, pageFilename, formID)
 
+		//save the pdf filename for the merge at the end
+		mergePaths = append(mergePaths, pageFilename)
+
 	}
 
-}
-
-func convertJPEGToOverlaidPDF(jpegFilename string, pageFilename string, formID string) {
-
-	c := creator.New()
-
-	c.SetPageMargins(0, 0, 0, 0) // we're not printing
-
-	markOptions, err := AddImagePage(jpegFilename, c) //isLandscape
+	outputPath := fmt.Sprintf("%s-mark.pdf", basename)
+	err = mergePdf(mergePaths, outputPath)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
-
-	// write to memory
-	var buf bytes.Buffer
-
-	err = c.Write(&buf)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	// convert buffer to readseeker
-	var bufslice []byte
-	fbuf := filebuffer.New(bufslice)
-	fbuf.Write(buf.Bytes())
-
-	// read in from memory
-	pdfReader, err := pdf.NewPdfReader(fbuf)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	pdfWriter := pdf.NewPdfWriter()
-
-	page, err := pdfReader.GetPage(1)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	err = pdfWriter.SetForms(createMarks(page, *markOptions, formID))
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	err = pdfWriter.AddPage(page)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	of, err := os.Create(pageFilename)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	defer of.Close()
-
-	pdfWriter.Write(of)
 }

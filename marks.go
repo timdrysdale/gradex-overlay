@@ -1,11 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"math"
+	"os"
 
+	"github.com/mattetti/filebuffer"
 	"github.com/unidoc/unipdf/v3/annotator"
+	creator "github.com/unidoc/unipdf/v3/creator"
 	"github.com/unidoc/unipdf/v3/model"
+	pdf "github.com/unidoc/unipdf/v3/model"
 )
 
 type markOpt struct {
@@ -70,4 +75,67 @@ func createMarks(page *model.PdfPage, opt markOpt, formID string) *model.PdfAcro
 	}
 
 	return form
+}
+
+func convertJPEGToOverlaidPDF(jpegFilename string, pageFilename string, formID string) {
+
+	c := creator.New()
+
+	c.SetPageMargins(0, 0, 0, 0) // we're not printing
+
+	markOptions, err := AddImagePage(jpegFilename, c) //isLandscape
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	// write to memory
+	var buf bytes.Buffer
+
+	err = c.Write(&buf)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	// convert buffer to readseeker
+	var bufslice []byte
+	fbuf := filebuffer.New(bufslice)
+	fbuf.Write(buf.Bytes())
+
+	// read in from memory
+	pdfReader, err := pdf.NewPdfReader(fbuf)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	pdfWriter := pdf.NewPdfWriter()
+
+	page, err := pdfReader.GetPage(1)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	err = pdfWriter.SetForms(createMarks(page, *markOptions, formID))
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	err = pdfWriter.AddPage(page)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	of, err := os.Create(pageFilename)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	defer of.Close()
+
+	pdfWriter.Write(of)
 }

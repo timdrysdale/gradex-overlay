@@ -1,171 +1,15 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 
-	"github.com/mattetti/filebuffer"
 	unicommon "github.com/unidoc/unipdf/v3/common"
 	"github.com/unidoc/unipdf/v3/core"
-	creator "github.com/unidoc/unipdf/v3/creator"
-	"github.com/unidoc/unipdf/v3/model"
 	pdf "github.com/unidoc/unipdf/v3/model"
 )
 
-func coverPdf(inputPath string, outputPath string) error {
-	pdfWriter := pdf.NewPdfWriter()
-
-	// add generated page here
-	//coverPage := pdf.NewPdfPage()
-
-	helvetica, _ := model.NewStandard14Font("Helvetica")
-	helveticaBold, _ := model.NewStandard14Font("Helvetica-Bold")
-
-	c := creator.New()
-	c.SetPageSize(creator.PageSizeA4)
-
-	//coverPage := c.NewPage()
-
-	p := c.NewParagraph("Submission Cover Page")
-	p.SetFont(helveticaBold)
-	p.SetFontSize(30)
-	p.SetTextAlignment(creator.TextAlignmentCenter)
-	p.SetMargins(0, 0, 150, 0)
-	p.SetColor(creator.ColorRGBFrom8bit(45, 148, 215))
-	c.Draw(p)
-
-	p = c.NewParagraph(`By attaching this cover page, I confirm that all my answers are hand-written by myself, or that I have an existing adjustment that permits the use of a scribe or a computer.`)
-	p.SetFont(helvetica)
-	p.SetFontSize(14)
-	p.SetEnableWrap(true)
-	p.SetMargins(100, 100, 200, 0)
-	p.SetWidth(500)
-	p.SetTextAlignment(creator.TextAlignmentCenter)
-	//p.SetPos(0, 400)
-	p.SetColor(creator.ColorRGBFrom8bit(45, 148, 215))
-	c.Draw(p)
-
-	//err := c.WriteToFile("cover_page.pdf")
-
-	var buf bytes.Buffer
-	err := c.Write(&buf)
-	if err != nil {
-		return err
-	}
-
-	var bufslice []byte
-	fbuf := filebuffer.New(bufslice)
-	fbuf.Write(buf.Bytes())
-
-	pdfReader, err := pdf.NewPdfReader(fbuf)
-	if err != nil {
-		return err
-	}
-
-	numPages, err := pdfReader.GetNumPages()
-	if err != nil {
-		return err
-	}
-
-	for i := 0; i < numPages; i++ {
-		pageNum := i + 1
-
-		page, err := pdfReader.GetPage(pageNum)
-		if err != nil {
-			return err
-		}
-
-		err = pdfWriter.AddPage(page)
-		if err != nil {
-			return err
-		}
-	}
-
-	//err := pdfWriter.AddPage(cp)
-	//if err != nil {
-	//	return err
-	//}
-	// end adding generated page
-
-	var forms *pdf.PdfAcroForm
-
-	docIdx := 0
-
-	f, err := os.Open(inputPath)
-	if err != nil {
-		return err
-	}
-
-	defer f.Close()
-
-	pdfReader, err = pdf.NewPdfReader(f)
-	if err != nil {
-		return err
-	}
-
-	isEncrypted, err := pdfReader.IsEncrypted()
-	if err != nil {
-		return err
-	}
-
-	if isEncrypted {
-		_, err = pdfReader.Decrypt([]byte(""))
-		if err != nil {
-			return err
-		}
-	}
-
-	numPages, err = pdfReader.GetNumPages()
-	if err != nil {
-		return err
-	}
-
-	for i := 0; i < numPages; i++ {
-		pageNum := i + 1
-
-		page, err := pdfReader.GetPage(pageNum)
-		if err != nil {
-			return err
-		}
-
-		err = pdfWriter.AddPage(page)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Handle forms.
-	if pdfReader.AcroForm != nil {
-		if forms == nil {
-			forms = pdfReader.AcroForm
-		} else {
-			forms, err = mergeForms(forms, pdfReader.AcroForm, docIdx+1)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	fWrite, err := os.Create(outputPath)
-	if err != nil {
-		return err
-	}
-
-	defer fWrite.Close()
-
-	// Set the merged forms object.
-	if forms != nil {
-		pdfWriter.SetForms(forms)
-	}
-
-	err = pdfWriter.Write(fWrite)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
+//From https://github.com/unidoc/unipdf-examples/blob/master/pages/pdf_merge_advanced.go
 
 func getDict(obj core.PdfObject) *core.PdfObjectDictionary {
 	if obj == nil {
@@ -371,4 +215,86 @@ func mergeForms(form, form2 *pdf.PdfAcroForm, docNum int) (*pdf.PdfAcroForm, err
 	}
 
 	return form, nil
+}
+
+func mergePdf(inputPaths []string, outputPath string) error {
+	pdfWriter := pdf.NewPdfWriter()
+
+	var forms *pdf.PdfAcroForm
+
+	for docIdx, inputPath := range inputPaths {
+		f, err := os.Open(inputPath)
+		if err != nil {
+			return err
+		}
+
+		defer f.Close()
+
+		pdfReader, err := pdf.NewPdfReader(f)
+		if err != nil {
+			return err
+		}
+
+		isEncrypted, err := pdfReader.IsEncrypted()
+		if err != nil {
+			return err
+		}
+
+		if isEncrypted {
+			_, err = pdfReader.Decrypt([]byte(""))
+			if err != nil {
+				return err
+			}
+		}
+
+		numPages, err := pdfReader.GetNumPages()
+		if err != nil {
+			return err
+		}
+
+		for i := 0; i < numPages; i++ {
+			pageNum := i + 1
+
+			page, err := pdfReader.GetPage(pageNum)
+			if err != nil {
+				return err
+			}
+
+			err = pdfWriter.AddPage(page)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Handle forms.
+		if pdfReader.AcroForm != nil {
+			if forms == nil {
+				forms = pdfReader.AcroForm
+			} else {
+				forms, err = mergeForms(forms, pdfReader.AcroForm, docIdx+1)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	fWrite, err := os.Create(outputPath)
+	if err != nil {
+		return err
+	}
+
+	defer fWrite.Close()
+
+	// Set the merged forms object.
+	if forms != nil {
+		pdfWriter.SetForms(forms)
+	}
+
+	err = pdfWriter.Write(fWrite)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
