@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/unidoc/unipdf/v3/annotator"
 	"github.com/unidoc/unipdf/v3/model"
@@ -28,24 +29,16 @@ func createMarks(page *model.PdfPage, opt markOpt, formID string) *model.PdfAcro
 	xright := opt.pageWidth - opt.barwidth + opt.markMargin
 	xleft := opt.barwidth - opt.markWidth - opt.markMargin
 
-	idx := 0
+	numMarks := math.Floor((opt.pageHeight - opt.markBottomMargin) / opt.marksEvery)
+	ytop := opt.markBottomMargin + ((numMarks - 1) * opt.marksEvery)
 
-	for ypos := opt.markBottomMargin; ypos < opt.pageHeight-opt.marksEvery; ypos = ypos + opt.marksEvery {
+	//do this way to get tab order correct (left column, then right column, top to bottom)
+	//for ypos := opt.markBottomMargin; ypos < opt.pageHeight-opt.marksEvery; ypos = ypos + opt.marksEvery {
 
-		// right
-		if opt.right {
-			tfopt := annotator.TextFieldOptions{}
-			name := fmt.Sprintf("%s-right-%02d", formID, idx)
-			rect := []float64{xright, ypos, xright + opt.markWidth, ypos + opt.markHeight}
-			textf, err := annotator.NewTextField(page, name, rect, tfopt)
-			if err != nil {
-				panic(err)
-			}
-			*form.Fields = append(*form.Fields, textf.PdfField)
-			page.AddAnnotation(textf.Annotations[0].PdfAnnotation)
-		}
+	if opt.left {
+		for idx := 0; idx < int(numMarks); idx = idx + 1 {
 
-		if opt.left {
+			ypos := ytop - (float64(idx) * opt.marksEvery)
 
 			tfopt := annotator.TextFieldOptions{}
 			name := fmt.Sprintf("%s-left-%02d", formID, idx)
@@ -58,7 +51,22 @@ func createMarks(page *model.PdfPage, opt markOpt, formID string) *model.PdfAcro
 			page.AddAnnotation(textf.Annotations[0].PdfAnnotation)
 		}
 
-		idx = idx + 1
+	}
+
+	// right
+	if opt.right {
+		for idx := 0; idx < int(numMarks); idx = idx + 1 {
+			ypos := ytop - (float64(idx) * opt.marksEvery)
+			tfopt := annotator.TextFieldOptions{}
+			name := fmt.Sprintf("%s-right-%02d", formID, idx)
+			rect := []float64{xright, ypos, xright + opt.markWidth, ypos + opt.markHeight}
+			textf, err := annotator.NewTextField(page, name, rect, tfopt)
+			if err != nil {
+				panic(err)
+			}
+			*form.Fields = append(*form.Fields, textf.PdfField)
+			page.AddAnnotation(textf.Annotations[0].PdfAnnotation)
+		}
 	}
 
 	return form
