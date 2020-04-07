@@ -35,16 +35,16 @@ func createMarks(page *model.PdfPage, opt markOpt, formID string) *model.PdfAcro
 	xright := opt.pageWidth - opt.barwidth + opt.markMargin
 	xleft := opt.barwidth - opt.markWidth - opt.markMargin
 
-	numMarks := math.Floor((opt.pageHeight) / opt.marksEvery)
+	numMarks := math.Floor(opt.pageHeight / opt.marksEvery)
+
+	yTop := 0.5 * (opt.pageHeight + opt.marksEvery*(numMarks-1) - opt.markHeight)
 
 	if opt.left {
-		for idx := 1; idx <= int(numMarks); idx = idx + 1 {
-
-			ypos := opt.pageHeight - (float64(idx) * opt.marksEvery) + opt.markBottomMargin
-			fmt.Printf("%d %f\n", idx, ypos)
+		for idx := 0; idx < int(numMarks); idx = idx + 1 {
+			yPos := yTop - (float64(idx) * opt.marksEvery)
 			tfopt := annotator.TextFieldOptions{}
 			name := fmt.Sprintf("%s-left-%02d", formID, idx)
-			rect := []float64{xleft, ypos, xleft + opt.markWidth, ypos + opt.markHeight}
+			rect := []float64{xleft, yPos, xleft + opt.markWidth, yPos + opt.markHeight}
 			textf, err := annotator.NewTextField(page, name, rect, tfopt)
 			if err != nil {
 				panic(err)
@@ -57,11 +57,11 @@ func createMarks(page *model.PdfPage, opt markOpt, formID string) *model.PdfAcro
 
 	// right
 	if opt.right {
-		for idx := 1; idx <= int(numMarks); idx = idx + 1 {
-			ypos := opt.pageHeight - (float64(idx) * opt.marksEvery) + opt.markBottomMargin
+		for idx := 0; idx < int(numMarks); idx = idx + 1 {
+			yPos := yTop - (float64(idx) * opt.marksEvery)
 			tfopt := annotator.TextFieldOptions{}
 			name := fmt.Sprintf("%s-right-%02d", formID, idx)
-			rect := []float64{xright, ypos, xright + opt.markWidth, ypos + opt.markHeight}
+			rect := []float64{xright, yPos, xright + opt.markWidth, yPos + opt.markHeight}
 			textf, err := annotator.NewTextField(page, name, rect, tfopt)
 			if err != nil {
 				panic(err)

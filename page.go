@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math"
 
 	creator "github.com/unidoc/unipdf/v3/creator"
@@ -82,28 +81,21 @@ func AddImagePage(imgPath string, c *creator.Creator) (*markOpt, error) {
 	xright := opt.pageWidth - opt.barwidth + opt.markMargin
 	xleft := opt.barwidth - opt.markWidth - opt.markMargin
 
-	numMarks := math.Floor((opt.pageHeight) / opt.marksEvery)
+	numMarks := math.Floor(opt.pageHeight / opt.marksEvery)
 
-	vspace := 0.0
+	yTop := 0.5 * (pageHeight + opt.marksEvery*(numMarks-1) - opt.markHeight)
 
-	if isLandscape {
-		vspace = 4 * creator.PPMM
-	}
-
-	opt.markBottomMargin = vspace //hack
-
-	for idx := 1; idx <= int(numMarks); idx = idx + 1 {
-		ypos := pageHeight - (float64(idx) * opt.marksEvery) + vspace
-		fmt.Printf("%d %f\n", idx, ypos)
+	for idx := 0; idx < int(numMarks); idx = idx + 1 {
+		yPos := yTop - (float64(idx) * opt.marksEvery)
 		if opt.left {
-			rect = c.NewRectangle(xleft, ypos, opt.markWidth, opt.markHeight)
+			rect = c.NewRectangle(xleft, yPos, opt.markWidth, opt.markHeight)
 			rect.SetBorderColor(creator.ColorRed)
 			rect.SetFillColor(creator.ColorRGBFromHex("#FFFFFF"))
 			c.Draw(rect)
 		}
 		if opt.right {
 
-			rect = c.NewRectangle(xright, ypos, opt.markWidth, opt.markHeight)
+			rect = c.NewRectangle(xright, yPos, opt.markWidth, opt.markHeight)
 			rect.SetBorderColor(creator.ColorRed)
 			rect.SetFillColor(creator.ColorRGBFromHex("#FFFFFF"))
 			c.Draw(rect)
