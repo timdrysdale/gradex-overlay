@@ -1,7 +1,13 @@
 # gradex-overlay
 
-add an acroforms marking sidebar to each page in a pdf
+![alt text][logo]
 
+
+![alt text][status]
+
+Add acroforms sidebars to pdf pages in support of [marking in a more paper-like way](https://www.teaching-matters-blog.ed.ac.uk/spotlight-on-alternative-assessment-methods-remote-exam-marking-holding-on-to-the-philosophy-of-paper/) yet with the convenience of digital processes.
+
+![alt text][four-pages]
 
 # Installation
 
@@ -68,16 +74,9 @@ The performance is coming in at around just over a second per page, mostly time 
 
 ## Customisation
 
+The layout engine is implemented in [timdrysdale/parsesvg](https://github.com/timdrysdale/parsesvg)
 
-# parsesvg
-parse svg to produce the acroforms needed by **pdf.gradex**™ (an AGPL open source exam marking tool)
-
-![alt text][logo]
-
-
-![alt text][status]
-
-If you are coming here from pdf.gradex.io, then welcome to the developer side of things where all the details are. We're working on a user workflow that is a piece of cake, that will automate the fiddly bits. Meanwhile, if you like knowing how things work, feel free to take a look around.
+This is getting into developer territory and is not needed to use a template set that you have already been provided with. We're working on a user workflow that is a piece of cake, that will automate the fiddly bits. Meanwhile, if you like knowing how things work, feel free to take a look around.
 
 ## Context
 
@@ -409,7 +408,7 @@ A ```spread``` is the subsection of the overall layout that we pass to the layou
 
 ## What next?
 
-There's a [commmand line tool](https://github.com/timdrysdale/gradex-overlay) under development now, and a GUI to follow.
+We've got a bunch of features in mind for data extraction, multimarker merging and so on. Watch this space.
 
 [anchor]: ./img/inkscape-anchor-alignment.png "circle on corner of page and snap settings bar"
 [compare-active-inactive]: ./img/compare-active-inactive-sidebar.png "green coloured active moderate bar and grey thin inactive moderate sidebar"
@@ -420,6 +419,7 @@ There's a [commmand line tool](https://github.com/timdrysdale/gradex-overlay) un
 [example-chrome]: ./img/example-chrome.png "just showing the pretty surrounds, not the anchor or textfields"
 [example-nonchrome]: ./img/example-nonchrome.png "just showing the anchor or textfields"
 [export-troubleshooting]: ./img/export-troubleshooting.png "examples with black background, anchor and textfields showing"
+[four-pages]: ./img/four-pages.png "four pages in an example progression from submission to checking"
 [layout-example]: ./img/layout-example-with-layer-dialogue.png "drawing with a header and three side bars surrounding an original scan of work to be marked"
 [metadata-title]: ./img/metadata-title.png "inkscape metadata tab in document properties, showing title is ladder3-rect"
 [layer-visibility]: ./img/layer-visibility-at-export.png "Layers dialog with the chrome layer set to visible, and all others invisible"
