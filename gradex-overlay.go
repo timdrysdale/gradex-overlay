@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/timdrysdale/parsesvg"
 	unicommon "github.com/unidoc/unipdf/v3/common"
 )
 
@@ -35,6 +36,7 @@ func main() {
 	}
 
 	inputPath := os.Args[1]
+	spreadName := os.Args[2]
 
 	suffix := filepath.Ext(inputPath)
 
@@ -74,7 +76,6 @@ func main() {
 	}
 
 	pageFileOption := fmt.Sprintf("%s/%s%%04d.pdf", pagePath, basename)
-	formNameOption := fmt.Sprintf("%s%%04d", basename)
 
 	mergePaths := []string{}
 
@@ -82,19 +83,23 @@ func main() {
 	for imgIdx := 1; imgIdx <= numPages; imgIdx = imgIdx + 1 {
 
 		// construct image name
-		jpegFilename := fmt.Sprintf(jpegFileOption, imgIdx)
+		previousImagePath := fmt.Sprintf(jpegFileOption, imgIdx)
 		pageFilename := fmt.Sprintf(pageFileOption, imgIdx)
-		formID := fmt.Sprintf(formNameOption, imgIdx)
 
-		// do the overlay
-		convertJPEGToOverlaidPDF(jpegFilename, pageFilename, formID)
+		//TODO select Layout to suit landscape or portrait
+		svgLayoutPath := "./test/layout-312pt-static-mark-dynamic-moderate-comment-static-check.svg"
+
+		err := parsesvg.RenderSpread(svgLayoutPath, spreadName, previousImagePath, imgIdx, pageFilename)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			os.Exit(1)
+		}
 
 		//save the pdf filename for the merge at the end
 		mergePaths = append(mergePaths, pageFilename)
-
 	}
 
-	outputPath := fmt.Sprintf("%s-mark.pdf", basename)
+	outputPath := fmt.Sprintf("%s-%s.pdf", basename, spreadName)
 	err = mergePdf(mergePaths, outputPath)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
