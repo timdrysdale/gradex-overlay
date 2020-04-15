@@ -30,8 +30,8 @@ func init() {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Printf("Requires one argument: input_path\n")
-		fmt.Printf("Usage: gradex-coverpage.exe input.pdf\n")
+		fmt.Printf("Requires two arguments: input_path sidebar\n")
+		fmt.Printf("Usage: gradex-overlay.exe input.pdf sidebar\n")
 		os.Exit(0)
 	}
 

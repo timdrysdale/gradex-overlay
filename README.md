@@ -408,7 +408,7 @@ A ```spread``` is the subsection of the overall layout that we pass to the layou
 
 ## What next?
 
-We've got a bunch of features in mind for data extraction, multimarker merging and so on. Watch this space.
+We've got a bunch of features in mind for data extraction, multimarker merging and so on. Watch this space. 
 
 [anchor]: ./img/inkscape-anchor-alignment.png "circle on corner of page and snap settings bar"
 [compare-active-inactive]: ./img/compare-active-inactive-sidebar.png "green coloured active moderate bar and grey thin inactive moderate sidebar"
