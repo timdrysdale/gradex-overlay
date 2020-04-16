@@ -15,7 +15,7 @@ Add acroforms sidebars to pdf pages in support of [marking in a more paper-like 
 ## Dependency
 
 ### Ghostscript 
-Download the 64 bit windows AGPL version of [Ghostscript](https://www.ghostscript.com/download/gsdnld.html), choosing the [64bit windows binary](https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs952/gs952w32.exe)
+Download the 64 bit windows AGPL version of [Ghostscript](https://www.ghostscript.com/download/gsdnld.html), choosing the [64bit windows binary](https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs952/gs952w64.exe)
 
 #### Add to PATH
 You may need to manually add an entry in the PATH environment variable
