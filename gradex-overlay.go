@@ -46,6 +46,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	err := doOneDoc(inputPath, spreadName)
+
+	if err != nil {
+		fmt.Printf("Error: processing document %s: %v\n", inputPath, err)
+		os.Exit(1)
+	}
+}
+
+func doOneDoc(inputPath, spreadName string) error {
 	// need page count to find the jpeg files again later
 	numPages, err := countPages(inputPath)
 
@@ -53,17 +62,15 @@ func main() {
 	jpegPath := "./jpg"
 	err = ensureDir(jpegPath)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
+		return err
 	}
-
+	suffix := filepath.Ext(inputPath)
 	basename := strings.TrimSuffix(inputPath, suffix)
 	jpegFileOption := fmt.Sprintf("%s/%s%%04d.jpg", jpegPath, basename)
 
 	err = convertPDFToJPEGs(inputPath, jpegPath, jpegFileOption)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	// convert images to individual pdfs, with form overlay
@@ -71,8 +78,7 @@ func main() {
 	pagePath := "./pdf"
 	err = ensureDir(pagePath)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	pageFileOption := fmt.Sprintf("%s/%s%%04d.pdf", pagePath, basename)
@@ -91,8 +97,7 @@ func main() {
 
 		err := parsesvg.RenderSpread(svgLayoutPath, spreadName, previousImagePath, imgIdx, pageFilename)
 		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			os.Exit(1)
+			return err
 		}
 
 		//save the pdf filename for the merge at the end
@@ -101,8 +106,6 @@ func main() {
 
 	outputPath := fmt.Sprintf("%s-%s.pdf", basename, spreadName)
 	err = mergePdf(mergePaths, outputPath)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
+	return err
+
 }
