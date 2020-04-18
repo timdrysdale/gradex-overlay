@@ -14,12 +14,16 @@ package main
  */
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
+	"github.com/bsipos/thist"
 	"github.com/timdrysdale/parsesvg"
+	"github.com/timdrysdale/pool"
 	unicommon "github.com/unidoc/unipdf/v3/common"
 )
 
@@ -30,15 +34,18 @@ func init() {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Printf("Requires two arguments: input_path sidebar\n")
-		fmt.Printf("Usage: gradex-overlay.exe input.pdf sidebar\n")
+		fmt.Printf("Requires two arguments: sidebar input_path[s]\n")
+		fmt.Printf("Usage: gradex-overlay.exe sidebar input-*.pdf\n")
 		os.Exit(0)
 	}
 
-	inputPath := os.Args[1]
-	spreadName := os.Args[2]
+	spreadName := os.Args[1]
 
-	suffix := filepath.Ext(inputPath)
+	var inputPath []string
+
+	inputPath = os.Args[2:]
+
+	suffix := filepath.Ext(inputPath[0])
 
 	// sanity check
 	if suffix != ".pdf" {
@@ -46,15 +53,62 @@ func main() {
 		os.Exit(1)
 	}
 
-	err := doOneDoc(inputPath, spreadName)
+	N := len(inputPath)
 
-	if err != nil {
-		fmt.Printf("Error: processing document %s: %v\n", inputPath, err)
-		os.Exit(1)
+	pcChan := make(chan int, N)
+
+	tasks := []*pool.Task{}
+
+	for i := 0; i < N; i++ {
+
+		inputPDF := inputPath[i]
+		spreadName := spreadName
+		newtask := pool.NewTask(func() error {
+			pc, err := doOneDoc(inputPDF, spreadName)
+			pcChan <- pc
+			return err
+		})
+		tasks = append(tasks, newtask)
 	}
+
+	p := pool.NewPool(tasks, runtime.GOMAXPROCS(-1))
+
+	closed := make(chan struct{})
+
+	h := thist.NewHist(nil, "Page count", "fixed", 10, false)
+
+	go func() {
+	LOOP:
+		for {
+			select {
+			case pc := <-pcChan:
+				h.Update(float64(pc))
+				fmt.Println(h.Draw())
+			case <-closed:
+				break LOOP
+			}
+		}
+	}()
+
+	p.Run()
+
+	var numErrors int
+	for _, task := range p.Tasks {
+		if task.Err != nil {
+			fmt.Println(task.Err)
+			numErrors++
+		}
+	}
+	close(closed)
+
 }
 
-func doOneDoc(inputPath, spreadName string) error {
+func doOneDoc(inputPath, spreadName string) (int, error) {
+
+	if strings.ToLower(filepath.Ext(inputPath)) != ".pdf" {
+		return 0, errors.New(fmt.Sprintf("%s does not appear to be a pdf", inputPath))
+	}
+
 	// need page count to find the jpeg files again later
 	numPages, err := countPages(inputPath)
 
@@ -62,7 +116,7 @@ func doOneDoc(inputPath, spreadName string) error {
 	jpegPath := "./jpg"
 	err = ensureDir(jpegPath)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	suffix := filepath.Ext(inputPath)
 	basename := strings.TrimSuffix(inputPath, suffix)
@@ -70,7 +124,7 @@ func doOneDoc(inputPath, spreadName string) error {
 
 	err = convertPDFToJPEGs(inputPath, jpegPath, jpegFileOption)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// convert images to individual pdfs, with form overlay
@@ -78,7 +132,7 @@ func doOneDoc(inputPath, spreadName string) error {
 	pagePath := "./pdf"
 	err = ensureDir(pagePath)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	pageFileOption := fmt.Sprintf("%s/%s%%04d.pdf", pagePath, basename)
@@ -97,7 +151,7 @@ func doOneDoc(inputPath, spreadName string) error {
 
 		err := parsesvg.RenderSpread(svgLayoutPath, spreadName, previousImagePath, imgIdx, pageFilename)
 		if err != nil {
-			return err
+			return 0, err
 		}
 
 		//save the pdf filename for the merge at the end
@@ -106,6 +160,10 @@ func doOneDoc(inputPath, spreadName string) error {
 
 	outputPath := fmt.Sprintf("%s-%s.pdf", basename, spreadName)
 	err = mergePdf(mergePaths, outputPath)
-	return err
+	if err != nil {
+		return 0, err
+	}
+
+	return numPages, nil
 
 }
