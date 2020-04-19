@@ -14,16 +14,9 @@ package main
  */
 
 import (
-	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
-	"runtime"
-	"strings"
 
-	"github.com/bsipos/thist"
-	"github.com/timdrysdale/parsesvg"
-	"github.com/timdrysdale/pool"
 	unicommon "github.com/unidoc/unipdf/v3/common"
 )
 
@@ -33,137 +26,198 @@ func init() {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Printf("Requires two arguments: sidebar input_path[s]\n")
-		fmt.Printf("Usage: gradex-overlay.exe sidebar input-*.pdf\n")
-		os.Exit(0)
-	}
 
-	spreadName := os.Args[1]
-
-	var inputPath []string
-
-	inputPath = os.Args[2:]
-
-	suffix := filepath.Ext(inputPath[0])
-
-	// sanity check
-	if suffix != ".pdf" {
-		fmt.Printf("Error: input path must be a .pdf\n")
-		os.Exit(1)
-	}
-
-	N := len(inputPath)
-
-	pcChan := make(chan int, N)
-
-	tasks := []*pool.Task{}
-
-	for i := 0; i < N; i++ {
-
-		inputPDF := inputPath[i]
-		spreadName := spreadName
-		newtask := pool.NewTask(func() error {
-			pc, err := doOneDoc(inputPDF, spreadName)
-			pcChan <- pc
-			return err
-		})
-		tasks = append(tasks, newtask)
-	}
-
-	p := pool.NewPool(tasks, runtime.GOMAXPROCS(-1))
+	c := make(chan int, 1000)
 
 	closed := make(chan struct{})
 
-	h := thist.NewHist(nil, "Page count", "fixed", 10, false)
+	err := actionExam("ENGI01020", "mark", c)
 
 	go func() {
+		scripts := 0
+		pages := 0
 	LOOP:
 		for {
 			select {
-			case pc := <-pcChan:
-				h.Update(float64(pc))
-				fmt.Println(h.Draw())
+			case <-closed:
+				break LOOP
+			case val := <-c:
+				scripts++
+				pages = pages + val
+				fmt.Printf("%03d / %04d\n", scripts, pages)
+			}
+
+		}
+	}()
+
+	if err != nil {
+		fmt.Print(err.Error())
+		os.Exit(1)
+	}
+
+}
+
+/*
+	a := app.New()
+
+	//closed := make(chan struct{})
+	//c := make(chan float64)
+	rand.Seed(time.Now().UnixNano())
+
+	//gridSize := fyne.NewSize(100+theme.Padding(), 100+theme.Padding())
+	//cellSize := fyne.NewSize(50, 50)
+
+	w := a.NewWindow("Hello")
+
+	tc := widget.NewTabContainer()
+
+	//entry := widget.NewEntry()
+
+	examLabel := widget.NewLabel("ELEE09442 - Special Topics in Counting")
+
+	submitCount := widget.NewEntry()
+	submitCount.SetText("0")
+	submitButton := widget.NewButton("Count submitted scripts", func() { submitCount.SetText("10") })
+
+	markCount := widget.NewEntry()
+	markCount.SetText("0/10")
+	markButton := widget.NewButton("Add marking sidebar", func() { markCount.SetText("10/10") })
+
+	markedCount := widget.NewEntry()
+	markedCount.SetText("0/10")
+	markedButton := widget.NewButton("Count marked scripts", func() { markedCount.SetText("10/10") })
+
+	moderateCount := widget.NewEntry()
+	moderateCount.SetText("0/10")
+	moderateButton := widget.NewButton("Add moderating sidebar", func() { moderateCount.SetText("10/10") })
+
+	checkCount := widget.NewEntry()
+	checkCount.SetText("0/10")
+	checkButton := widget.NewButton("Add checking sidebar", func() { checkCount.SetText("10/10") })
+
+	moderatedCount := widget.NewEntry()
+	moderatedCount.SetText("0/10")
+	moderatedButton := widget.NewButton("Count moderated scripts", func() { moderatedCount.SetText("10/10") })
+
+	checkedCount := widget.NewEntry()
+	checkedCount.SetText("0/10")
+	checkedButton := widget.NewButton("Count checked scripts", func() { checkedCount.SetText("10/10") })
+
+	tab1 := widget.NewTabItem("ELEE09442", fyne.NewContainerWithLayout(layout.NewGridLayout(1),
+		examLabel,
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			submitButton,
+			submitCount,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			markButton,
+			markCount,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			markedButton,
+			markedCount,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			moderateButton,
+			moderateCount,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			moderatedButton,
+			moderatedCount,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			checkButton,
+			checkCount,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			checkedButton,
+			checkedCount,
+		),
+	))
+	examLabel2 := widget.NewLabel("ENGI12345 - Things to do with spanners")
+	submitCount2 := widget.NewEntry()
+	submitCount2.SetText("0")
+	submitButton2 := widget.NewButton("Count submitted scripts", func() { submitCount2.SetText("10") })
+
+	markCount2 := widget.NewEntry()
+	markCount2.SetText("0/10")
+	markButton2 := widget.NewButton("Add marking sidebar", func() { markCount2.SetText("10/10") })
+
+	markedCount2 := widget.NewEntry()
+	markedCount2.SetText("0/10")
+	markedButton2 := widget.NewButton("Count marked scripts", func() { markedCount2.SetText("10/10") })
+
+	moderateCount2 := widget.NewEntry()
+	moderateCount2.SetText("0/10")
+	moderateButton2 := widget.NewButton("Add moderating sidebar", func() { moderateCount2.SetText("10/10") })
+
+	checkCount2 := widget.NewEntry()
+	checkCount2.SetText("0/10")
+	checkButton2 := widget.NewButton("Add checking sidebar", func() { checkCount2.SetText("10/10") })
+
+	moderatedCount2 := widget.NewEntry()
+	moderatedCount2.SetText("0/10")
+	moderatedButton2 := widget.NewButton("Count moderated scripts", func() { moderatedCount2.SetText("10/10") })
+
+	checkedCount2 := widget.NewEntry()
+	checkedCount2.SetText("0/10")
+	checkedButton2 := widget.NewButton("Count checked scripts", func() { checkedCount2.SetText("10/10") })
+	tab2 := widget.NewTabItem("ENGI12345", fyne.NewContainerWithLayout(layout.NewGridLayout(1),
+		examLabel2,
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			submitButton2,
+			submitCount2,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			markButton2,
+			markCount2,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			markedButton2,
+			markedCount2,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			moderateButton2,
+			moderateCount2,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			moderatedButton2,
+			moderatedCount2,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			checkButton2,
+			checkCount2,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			checkedButton2,
+			checkedCount2,
+		),
+	))
+
+	tc.Append(tab1)
+	tc.Append(tab2)
+
+	w.SetContent(tc)
+
+	/*go func() {
+
+		total := int(0)
+	LOOP:
+		for {
+			select {
+			case <-c:
+				total++
+				entry.SetText(fmt.Sprintf("%d", total))
+				entry.Refresh()
 			case <-closed:
 				break LOOP
 			}
 		}
+
 	}()
+*/
 
-	p.Run()
-
-	var numErrors int
-	for _, task := range p.Tasks {
-		if task.Err != nil {
-			fmt.Println(task.Err)
-			numErrors++
-		}
-	}
-	close(closed)
-
+/*
+	w.ShowAndRun()
 }
-
-func doOneDoc(inputPath, spreadName string) (int, error) {
-
-	if strings.ToLower(filepath.Ext(inputPath)) != ".pdf" {
-		return 0, errors.New(fmt.Sprintf("%s does not appear to be a pdf", inputPath))
-	}
-
-	// need page count to find the jpeg files again later
-	numPages, err := countPages(inputPath)
-
-	// render to images
-	jpegPath := "./jpg"
-	err = ensureDir(jpegPath)
-	if err != nil {
-		return 0, err
-	}
-	suffix := filepath.Ext(inputPath)
-	basename := strings.TrimSuffix(inputPath, suffix)
-	jpegFileOption := fmt.Sprintf("%s/%s%%04d.jpg", jpegPath, basename)
-
-	err = convertPDFToJPEGs(inputPath, jpegPath, jpegFileOption)
-	if err != nil {
-		return 0, err
-	}
-
-	// convert images to individual pdfs, with form overlay
-
-	pagePath := "./pdf"
-	err = ensureDir(pagePath)
-	if err != nil {
-		return 0, err
-	}
-
-	pageFileOption := fmt.Sprintf("%s/%s%%04d.pdf", pagePath, basename)
-
-	mergePaths := []string{}
-
-	// gs starts indexing at 1
-	for imgIdx := 1; imgIdx <= numPages; imgIdx = imgIdx + 1 {
-
-		// construct image name
-		previousImagePath := fmt.Sprintf(jpegFileOption, imgIdx)
-		pageFilename := fmt.Sprintf(pageFileOption, imgIdx)
-
-		//TODO select Layout to suit landscape or portrait
-		svgLayoutPath := "./test/layout-312pt-static-mark-dynamic-moderate-comment-static-check.svg"
-
-		err := parsesvg.RenderSpread(svgLayoutPath, spreadName, previousImagePath, imgIdx, pageFilename)
-		if err != nil {
-			return 0, err
-		}
-
-		//save the pdf filename for the merge at the end
-		mergePaths = append(mergePaths, pageFilename)
-	}
-
-	outputPath := fmt.Sprintf("%s-%s.pdf", basename, spreadName)
-	err = mergePdf(mergePaths, outputPath)
-	if err != nil {
-		return 0, err
-	}
-
-	return numPages, nil
-
-}
+*/

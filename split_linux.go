@@ -11,6 +11,8 @@ func convertPDFToJPEGs(pdfPath string, jpegPath string, outputFile string) error
 
 	outputFileOption := fmt.Sprintf("-sOutputFile=%s", outputFile)
 
+	fmt.Printf("gs: %s %s %s\n", pdfPath, jpegPath, outputFile)
+
 	cmd := exec.Command("gs", "-dNOPAUSE", "-sDEVICE=jpeg", outputFileOption, "-dJPEGQ=90", "-r175", "-q", pdfPath,
 		"-c", "quit")
 
