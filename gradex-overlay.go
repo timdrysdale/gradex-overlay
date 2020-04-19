@@ -15,8 +15,11 @@ package main
 
 import (
 	"fmt"
-	"os"
 
+	"fyne.io/fyne"
+	"fyne.io/fyne/app"
+	"fyne.io/fyne/layout"
+	"fyne.io/fyne/widget"
 	unicommon "github.com/unidoc/unipdf/v3/common"
 )
 
@@ -26,34 +29,109 @@ func init() {
 }
 
 func main() {
+	a := app.New()
+	w := a.NewWindow("Gradex mark")
+	tc := widget.NewTabContainer()
 
-	c := make(chan int, 1000)
+	//entry := widget.NewEntry()
 
-	closed := make(chan struct{})
+	examLabel := widget.NewLabel("ELEE09442 - Special Topics in Counting")
 
-	err := actionExam("ENGI01020", "mark", c)
+	submitCount := widget.NewEntry()
+	submitCount.SetText("0")
+	submitButton := widget.NewButton("Count submitted scripts", func() { submitCount.SetText("10") })
 
-	go func() {
-		scripts := 0
-		pages := 0
-	LOOP:
-		for {
-			select {
-			case <-closed:
-				break LOOP
-			case val := <-c:
-				scripts++
-				pages = pages + val
-				fmt.Printf("%03d / %04d\n", scripts, pages)
+	markCount := widget.NewEntry()
+	markCount.SetText("0/0")
+	markButton := widget.NewButton("Add marking sidebar", func() {
+
+		markCount.SetText("Starting....")
+		c := make(chan int, 1000)
+		closed := make(chan struct{})
+
+		go func() {
+			scripts := 0
+			pages := 0
+		LOOP:
+			for {
+				select {
+				case <-closed:
+					break LOOP
+				case val := <-c:
+					scripts++
+					pages = pages + val
+					markCount.SetText(fmt.Sprintf("%d / %d\n", scripts, pages))
+				}
+
 			}
+		}()
 
-		}
-	}()
+		_ = actionExam("ENGI01020", "mark", c)
 
-	if err != nil {
+		close(closed)
+
+	})
+
+	markedCount := widget.NewEntry()
+	markedCount.SetText("0/10")
+	markedButton := widget.NewButton("Count marked scripts", func() { markedCount.SetText("10/10") })
+
+	moderateCount := widget.NewEntry()
+	moderateCount.SetText("0/10")
+	moderateButton := widget.NewButton("Add moderating sidebar", func() { moderateCount.SetText("10/10") })
+
+	checkCount := widget.NewEntry()
+	checkCount.SetText("0/10")
+	checkButton := widget.NewButton("Add checking sidebar", func() { checkCount.SetText("10/10") })
+
+	moderatedCount := widget.NewEntry()
+	moderatedCount.SetText("0/10")
+	moderatedButton := widget.NewButton("Count moderated scripts", func() { moderatedCount.SetText("10/10") })
+
+	checkedCount := widget.NewEntry()
+	checkedCount.SetText("0/10")
+	checkedButton := widget.NewButton("Count checked scripts", func() { checkedCount.SetText("10/10") })
+
+	tab1 := widget.NewTabItem("ELEE09442", fyne.NewContainerWithLayout(layout.NewGridLayout(1),
+		examLabel,
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			submitButton,
+			submitCount,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			markButton,
+			markCount,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			markedButton,
+			markedCount,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			moderateButton,
+			moderateCount,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			moderatedButton,
+			moderatedCount,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			checkButton,
+			checkCount,
+		),
+		fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+			checkedButton,
+			checkedCount,
+		),
+	))
+	tc.Append(tab1)
+
+	w.SetContent(tc)
+
+	w.ShowAndRun()
+	/*	if err != nil {
 		fmt.Print(err.Error())
 		os.Exit(1)
-	}
+	}*/
 
 }
 
