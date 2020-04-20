@@ -23,8 +23,10 @@ import (
 
 	"github.com/bsipos/thist"
 	"github.com/timdrysdale/parsesvg"
+	"github.com/timdrysdale/pdfcomment"
 	"github.com/timdrysdale/pool"
 	unicommon "github.com/unidoc/unipdf/v3/common"
+	pdf "github.com/unidoc/unipdf/v3/model"
 )
 
 func init() {
@@ -122,6 +124,22 @@ func doOneDoc(inputPath, spreadName string) (int, error) {
 	basename := strings.TrimSuffix(inputPath, suffix)
 	jpegFileOption := fmt.Sprintf("%s/%s%%04d.jpg", jpegPath, basename)
 
+	f, err := os.Open(inputPath)
+	if err != nil {
+		fmt.Println("Can't open pdf")
+		os.Exit(1)
+	}
+
+	pdfReader, err := pdf.NewPdfReader(f)
+	if err != nil {
+		fmt.Println("Can't read test pdf")
+		os.Exit(1)
+	}
+
+	comments, err := pdfcomment.GetComments(pdfReader)
+
+	f.Close()
+
 	err = convertPDFToJPEGs(inputPath, jpegPath, jpegFileOption)
 	if err != nil {
 		return 0, err
@@ -149,10 +167,27 @@ func doOneDoc(inputPath, spreadName string) (int, error) {
 		//TODO select Layout to suit landscape or portrait
 		svgLayoutPath := "./test/layout-312pt-static-mark-dynamic-moderate-comment-static-check.svg"
 
-		err := parsesvg.RenderSpread(svgLayoutPath, spreadName, previousImagePath, imgIdx, pageFilename)
-		if err != nil {
-			return 0, err
+		pageNumber := imgIdx - 1
+
+		contents := parsesvg.SpreadContents{
+			SvgLayoutPath:     svgLayoutPath,
+			SpreadName:        spreadName,
+			PreviousImagePath: previousImagePath,
+			PageNumber:        pageNumber,
+			PdfOutputPath:     pageFilename,
+			Comments:          comments,
 		}
+
+		err := parsesvg.RenderSpreadExtra(contents)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		//	err := parsesvg.RenderSpread(svgLayoutPath, spreadName, previousImagePath, imgIdx, pageFilename)
+		//	if err != nil {
+		//		return 0, err
+		//	}
 
 		//save the pdf filename for the merge at the end
 		mergePaths = append(mergePaths, pageFilename)
