@@ -23,8 +23,10 @@ import (
 
 	"github.com/bsipos/thist"
 	"github.com/timdrysdale/parsesvg"
+	"github.com/timdrysdale/pdfcomment"
 	"github.com/timdrysdale/pool"
-	unicommon "github.com/unidoc/unipdf/v3/common"
+	unicommon "github.com/timdrysdale/unipdf/v3/common"
+	pdf "github.com/timdrysdale/unipdf/v3/model"
 )
 
 func init() {
@@ -34,16 +36,18 @@ func init() {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Printf("Requires two arguments: sidebar input_path[s]\n")
-		fmt.Printf("Usage: gradex-overlay.exe sidebar input-*.pdf\n")
+		fmt.Printf("Requires two arguments: layout spread input_path[s]\n")
+		fmt.Printf("Usage: gradex-overlay.exe layout spread input-*.pdf\n")
 		os.Exit(0)
 	}
 
-	spreadName := os.Args[1]
+	layoutSvg := os.Args[1]
+
+	spreadName := os.Args[2]
 
 	var inputPath []string
 
-	inputPath = os.Args[2:]
+	inputPath = os.Args[3:] // TODO change to filewalk for cross platform!!
 
 	suffix := filepath.Ext(inputPath[0])
 
@@ -64,7 +68,7 @@ func main() {
 		inputPDF := inputPath[i]
 		spreadName := spreadName
 		newtask := pool.NewTask(func() error {
-			pc, err := doOneDoc(inputPDF, spreadName)
+			pc, err := doOneDoc(inputPDF, layoutSvg, spreadName)
 			pcChan <- pc
 			return err
 		})
@@ -103,7 +107,7 @@ func main() {
 
 }
 
-func doOneDoc(inputPath, spreadName string) (int, error) {
+func doOneDoc(inputPath, layoutSvg, spreadName string) (int, error) {
 
 	if strings.ToLower(filepath.Ext(inputPath)) != ".pdf" {
 		return 0, errors.New(fmt.Sprintf("%s does not appear to be a pdf", inputPath))
@@ -121,6 +125,22 @@ func doOneDoc(inputPath, spreadName string) (int, error) {
 	suffix := filepath.Ext(inputPath)
 	basename := strings.TrimSuffix(inputPath, suffix)
 	jpegFileOption := fmt.Sprintf("%s/%s%%04d.jpg", jpegPath, basename)
+
+	f, err := os.Open(inputPath)
+	if err != nil {
+		fmt.Println("Can't open pdf")
+		os.Exit(1)
+	}
+
+	pdfReader, err := pdf.NewPdfReader(f)
+	if err != nil {
+		fmt.Println("Can't read test pdf")
+		os.Exit(1)
+	}
+
+	comments, err := pdfcomment.GetComments(pdfReader)
+
+	f.Close()
 
 	err = convertPDFToJPEGs(inputPath, jpegPath, jpegFileOption)
 	if err != nil {
@@ -146,12 +166,21 @@ func doOneDoc(inputPath, spreadName string) (int, error) {
 		previousImagePath := fmt.Sprintf(jpegFileOption, imgIdx)
 		pageFilename := fmt.Sprintf(pageFileOption, imgIdx)
 
-		//TODO select Layout to suit landscape or portrait
-		svgLayoutPath := "./test/layout-312pt-static-mark-dynamic-moderate-comment-static-check.svg"
+		pageNumber := imgIdx - 1
 
-		err := parsesvg.RenderSpread(svgLayoutPath, spreadName, previousImagePath, imgIdx, pageFilename)
+		contents := parsesvg.SpreadContents{
+			SvgLayoutPath:     layoutSvg,
+			SpreadName:        spreadName,
+			PreviousImagePath: previousImagePath,
+			PageNumber:        pageNumber,
+			PdfOutputPath:     pageFilename,
+			Comments:          comments,
+		}
+
+		err := parsesvg.RenderSpreadExtra(contents)
 		if err != nil {
-			return 0, err
+			fmt.Println(err)
+			os.Exit(1)
 		}
 
 		//save the pdf filename for the merge at the end
