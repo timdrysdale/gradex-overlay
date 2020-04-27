@@ -1924,15 +1924,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.55352035"
-     inkscape:cx="117.23358"
+     inkscape:cx="-222.41066"
      inkscape:cy="517.80026"
      inkscape:document-units="mm"
-     inkscape:current-layer="layer5"
+     inkscape:current-layer="layer7"
      showgrid="false"
-     inkscape:window-width="1920"
-     inkscape:window-height="1163"
-     inkscape:window-x="1920"
-     inkscape:window-y="0"
+     inkscape:window-width="1850"
+     inkscape:window-height="1136"
+     inkscape:window-x="70"
+     inkscape:window-y="27"
      inkscape:window-maximized="1"
      inkscape:snap-global="true"
      showguides="false"
@@ -2840,26 +2840,6 @@
   </g>
   <g
      inkscape:groupmode="layer"
-     id="layer5"
-     inkscape:label="textprefills">
-    <rect
-       ry="0"
-       rx="0"
-       y="222.04051"
-       x="-36.969719"
-       height="52.671104"
-       width="33.987514"
-       id="rect33484"
-       style="display:inline;opacity:1;fill:#ff00ff;fill-opacity:0.55868542;stroke:none;stroke-width:0.46489412;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:9.44881821;stroke-opacity:1"
-       inkscape:label="#rect1156A">
-      <desc
-         id="desc33486">multiline</desc>
-      <title
-         id="title33482">previous-comments</title>
-    </rect>
-  </g>
-  <g
-     inkscape:groupmode="layer"
      id="layer7"
      inkscape:label="textfields"
      style="display:inline">
@@ -3000,7 +2980,7 @@
      inkscape:groupmode="layer"
      id="layer8"
      inkscape:label="anchors"
-     style="display:none">
+     style="display:inline">
     <path
        sodipodi:open="true"
        d="M 0.10655231,-3.9421291 A 3.9435091,3.9435091 0 0 1 3.9428572,0.07219154 3.9435091,3.9435091 0 0 1 -0.03794439,3.9432669 3.9435091,3.9435091 0 0 1 -3.9434974,-0.00371436 3.9435091,3.9435091 0 0 1 -0.03063502,-3.9434496"
