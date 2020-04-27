@@ -25,8 +25,8 @@ import (
 	"github.com/timdrysdale/parsesvg"
 	"github.com/timdrysdale/pdfcomment"
 	"github.com/timdrysdale/pool"
-	unicommon "github.com/unidoc/unipdf/v3/common"
-	pdf "github.com/unidoc/unipdf/v3/model"
+	unicommon "github.com/timdrysdale/unipdf/v3/common"
+	pdf "github.com/timdrysdale/unipdf/v3/model"
 )
 
 func init() {
